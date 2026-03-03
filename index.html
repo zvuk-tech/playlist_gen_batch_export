@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Batch Export</title>
+  <title>Zvuk Covers — ZIP Export</title>
 
   <!-- p5 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
@@ -41,12 +41,28 @@
       justify-content:center;
       align-items:center;
       min-height:640px;
+
+      /* ✅ важное: правильные слои */
+      position:relative;
+      z-index:1;
     }
+    /* ✅ canvas не должен перехватывать клики по панели (на GitHub Pages часто “накрывает” UI) */
+    #canvas-container canvas{
+      position:relative;
+      z-index:1;
+      pointer-events:none;
+    }
+
     .panel{
       background:var(--panel);
       border:1px solid var(--border);
       border-radius:var(--radius);
       padding:14px;
+
+      /* ✅ панель ВСЕГДА поверх */
+      position:relative;
+      z-index:10;
+      pointer-events:auto;
     }
     .title{font-size:14px; font-weight:800; margin:0 0 10px}
     .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
@@ -120,14 +136,13 @@
       </div>
 
       <div class="row">
-        <button id="batchZipBtn">Скачать ZIP</button>
-        <button id="batchStopBtn">Стоп</button>
-        <button id="previewRandomBtn">Рандом превью</button>
+        <!-- ✅ type="button" чтобы ничего не пыталось submit'иться -->
+        <button id="batchZipBtn" type="button">Скачать ZIP</button>
+        <button id="batchStopBtn" type="button">Стоп</button>
+        <button id="previewRandomBtn" type="button">Рандом превью</button>
       </div>
 
       <div id="batchStatus">Готов.</div>
-
-      
     </div>
   </div>
 </body>
