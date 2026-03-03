@@ -95,7 +95,7 @@ const PRESETS = {
       { min: -2,  max: 14, w: 0.44 }, // mid often
       { min: 14,  max: 30, w: 0.38 }, // wide often
     ],
-    ctrPrefW: { LOW: 0.65, MID: 0.30, HI: 0.05 }
+    ctrPrefW: { LOW: 0.75, MID: 0.22, HI: 0.03 }
   },
 
   MID: {
@@ -117,7 +117,7 @@ const PRESETS = {
       { min: -3,  max: 16, w: 0.37 },
       { min: 16,  max: 30, w: 0.18 },
     ],
-    ctrPrefW: { LOW: 0.15, MID: 0.55, HI: 0.30 }
+    ctrPrefW: { LOW: 0.10, MID: 0.55, HI: 0.35 }
   },
 
   MAX: {
@@ -139,7 +139,7 @@ const PRESETS = {
       { min: -4,  max: 14, w: 0.25 }, // mid sometimes
       { min: 14,  max: 30, w: 0.10 }, // wide rare but exists
     ],
-    ctrPrefW: { LOW: 0.03, MID: 0.20, HI: 0.77 }
+    ctrPrefW: { LOW: 0.02, MID: 0.15, HI: 0.83 }
   }
 };
 
