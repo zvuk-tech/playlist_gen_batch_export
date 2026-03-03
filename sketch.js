@@ -1,10 +1,12 @@
 // sketch.js
-// Batch ZIP export + hashtags
-// - Насыщенность УБРАНА
-// - el переименован в wvs (цвет волны)
-// - Контраст = DeltaE76 (Lab) + АВТОКАЛИБРОВКА порогов по твоей палитре => ctr-LOW/MID/HI
-//   (исправляет проблему “везде ctr-HI” на яркой палитре)
-// ========================
+// =====================================================
+// Zvuk Covers — Batch ZIP Export (LOW / MID / MAX)
+// - 3 sizes per cover (1000x1000, 534x530, 640x320)
+// - No folders in zip
+// - Hashtags in filename
+// - Contrast = DeltaE76 (Lab) + auto thresholds from palette
+// - Random logic matches original tool structure
+// =====================================================
 
 // ========================
 // GLOBALS
@@ -16,22 +18,20 @@ let ellipseX = [], ellipseY = [], ellipseW = [], ellipseH = [], ellipseSkew = []
 let baseHeightNorm = [], baseSkewNorm = [];
 let extraLeft = 5, extraRight = 5;
 
-// ✅ Badge toggles (default OFF for batch)
-let exportShowLogo = false;
-let exportShowPlaque = false;
-
-// ✅ Square preview buffer (shows EXACT square export framing)
 let squarePreviewGfx = null;
 let squarePreviewSize = 0;
 
+// Badge toggles (kept, but default OFF here)
+let exportShowLogo = false;
+let exportShowPlaque = false;
+
+// Palette
 const paletteColors = [
   "06DF65","B9FF8E","209F6D","AEEEFF","F7F0B1","FFD1E5","CBF2EC",
   "D7D9FF","2CB1FF","FF9535","FF49A0","00DBDB","765BFF"
 ];
 
-// ========================
-// FORBIDDEN COLOR PAIRS (bg <-> ellipse), order-independent
-// ========================
+// Forbidden pairs (as you had)
 const forbiddenPairsRaw = [
   ["AEEEFF","CBF2EC"],
   ["B9FF8E","AEEEFF"],
@@ -70,38 +70,84 @@ const forbiddenPairsRaw = [
 ];
 
 // ========================
-// BADGE ASSETS
+// PRESETS (LOW / MID / MAX)
+// “усилим, но не сильно” = смещаем вероятности,
+// но НЕ загоняем spacing в одно состояние.
 // ========================
-let plaqueImg = null;
-let logoImg = null;
+const PRESETS = {
+  LOW: {
+    tag: "m-LOW",
+    // random ranges modifier (soft)
+    ranges: {
+      waveAmplitude:   { min: 0,  max: 40, step: 1 },
+      maxEllipseHeight:{ min: 120,max: 300,step: 10 },
+      skewAngleX:      { min: -0.24, max: 0.24, step: 0.01 },
+      skewAngleY:      { min: -0.18, max: 0.18, step: 0.01 },
+      rotateXAngle:    { min: -0.30, max: 0.30, step: 0.01 },
+      rotateYAngle:    { min: -0.30, max: 0.30, step: 0.01 },
+      rotateZAngle:    { min: -0.30, max: 0.30, step: 0.01 },
+      ellipseWidth:    { min: 25, max: 90, step: 1, int: true },
+      heightRandomness:{ min: 0.10, max: 0.65, step: 0.01 },
+      lineCopies:      { min: 0, max: 2, step: 1, int: true },
+    },
+    spacingMix: [
+      { min: -15, max: -2, w: 0.18 }, // tight sometimes
+      { min: -2,  max: 14, w: 0.44 }, // mid often
+      { min: 14,  max: 30, w: 0.38 }, // wide often
+    ],
+    ctrPrefW: { LOW: 0.65, MID: 0.30, HI: 0.05 }
+  },
 
-function preload() {
-  // если файлов нет — просто не отрисуем бейдж
-  plaqueImg = loadImage('plaque.svg', () => {}, () => {});
-  logoImg   = loadImage('logo.svg',   () => {}, () => {});
-}
+  MID: {
+    tag: "m-MID",
+    ranges: {
+      waveAmplitude:   { min: 25, max: 75, step: 1 },
+      maxEllipseHeight:{ min: 170,max: 440,step: 10 },
+      skewAngleX:      { min: -0.48, max: 0.48, step: 0.01 },
+      skewAngleY:      { min: -0.32, max: 0.32, step: 0.01 },
+      rotateXAngle:    { min: -0.65, max: 0.65, step: 0.01 },
+      rotateYAngle:    { min: -0.65, max: 0.65, step: 0.01 },
+      rotateZAngle:    { min: -0.65, max: 0.65, step: 0.01 },
+      ellipseWidth:    { min: 35, max: 130, step: 1, int: true },
+      heightRandomness:{ min: 0.22, max: 0.92, step: 0.01 },
+      lineCopies:      { min: 0, max: 4, step: 1, int: true },
+    },
+    spacingMix: [
+      { min: -15, max: -3, w: 0.45 },
+      { min: -3,  max: 16, w: 0.37 },
+      { min: 16,  max: 30, w: 0.18 },
+    ],
+    ctrPrefW: { LOW: 0.15, MID: 0.55, HI: 0.30 }
+  },
+
+  MAX: {
+    tag: "m-MAX",
+    ranges: {
+      waveAmplitude:   { min: 60, max: 100, step: 1 },
+      maxEllipseHeight:{ min: 260,max: 500,step: 10 },
+      skewAngleX:      { min: -0.785, max: 0.785, step: 0.01 },
+      skewAngleY:      { min: -0.60,  max: 0.60,  step: 0.01 },
+      rotateXAngle:    { min: -1, max: 1, step: 0.01 },
+      rotateYAngle:    { min: -1, max: 1, step: 0.01 },
+      rotateZAngle:    { min: -1, max: 1, step: 0.01 },
+      ellipseWidth:    { min: 60, max: 150, step: 1, int: true },
+      heightRandomness:{ min: 0.40, max: 1.00, step: 0.01 },
+      lineCopies:      { min: 1, max: 5, step: 1, int: true },
+    },
+    spacingMix: [
+      { min: -15, max: -4, w: 0.65 }, // tight often
+      { min: -4,  max: 14, w: 0.25 }, // mid sometimes
+      { min: 14,  max: 30, w: 0.10 }, // wide rare but exists
+    ],
+    ctrPrefW: { LOW: 0.03, MID: 0.20, HI: 0.77 }
+  }
+};
+
+let ACTIVE_PRESET = "LOW";
 
 // ========================
-// COLOR / FORBIDDEN UTILS
-// ========================
-function normHex(h) {
-  return String(h).trim().replace(/^#/, "").toUpperCase();
-}
-function pairKey(a, b) {
-  const x = normHex(a);
-  const y = normHex(b);
-  return (x < y) ? `${x}|${y}` : `${y}|${x}`;
-}
-const forbiddenSet = new Set(forbiddenPairsRaw.map(([a,b]) => pairKey(a,b)));
-function isForbiddenPair(bgHex, ellHex) {
-  return forbiddenSet.has(pairKey(bgHex, ellHex));
-}
-function randomPaletteHex() {
-  return normHex(random(paletteColors));
-}
-
-// ========================
-// RANDOM RANGES (UI-less batch)
+// RANDOM BASE RANGES (as in original HTML sliders)
+// (Presets override some of these, but base stays consistent.)
 // ========================
 const PARAM_RANGES = {
   skewAngleX:        { min: -0.785, max: 0.785, step: 0.01 },
@@ -110,7 +156,7 @@ const PARAM_RANGES = {
   maxEllipseHeight:  { min: 100, max: 500, step: 10 },
   heightRandomness:  { min: 0, max: 1, step: 0.01 },
 
-  chaos:             { min: 0, max: 0.52, step: 0.01 },
+  chaos:             { min: 0, max: 0.52, step: 0.01 }, // NOTE: in original random you skipped chaos
 
   waveAmplitude:     { min: 0, max: 100, step: 1 },
   waveOffset:        { min: 0, max: 1000, step: 1 },
@@ -130,23 +176,118 @@ const PARAM_RANGES = {
   posZ:              { min: -500, max: 500, step: 1, int: true },
 };
 
-// ✅ как раньше: ellipseCount всегда максимум.
-// В твоём старом UI max был 50. Если тебе нужно 60 — поставь 60.
+// spacing exclusion for random button
+const RANDOM_SPACING_FORBIDDEN_MIN = -1;
+const RANDOM_SPACING_FORBIDDEN_MAX = 10;
+
+// ellipse count max as in UI max=50
 const MAX_ELLIPSE_COUNT = 50;
 
+// ========================
+// BADGE ASSETS (optional)
+// ========================
+let plaqueImg = null;
+let logoImg = null;
+function preload() {
+  plaqueImg = loadImage('plaque.svg', () => {}, () => {});
+  logoImg   = loadImage('logo.svg',   () => {}, () => {});
+}
+
+// ========================
+// COLOR / FORBIDDEN
+// ========================
+function normHex(h) {
+  return String(h).trim().replace(/^#/, "").toUpperCase();
+}
+function pairKey(a, b) {
+  const x = normHex(a);
+  const y = normHex(b);
+  return (x < y) ? `${x}|${y}` : `${y}|${x}`;
+}
+const forbiddenSet = new Set(forbiddenPairsRaw.map(([a,b]) => pairKey(a,b)));
+function isForbiddenPair(bgHex, wvsHex) {
+  return forbiddenSet.has(pairKey(bgHex, wvsHex));
+}
+function randomPaletteHex() {
+  return normHex(random(paletteColors));
+}
+function colorToHex(c) {
+  if (!c) return '#000000';
+  return '#' + hex2(red(c), 2) + hex2(green(c), 2) + hex2(blue(c), 2);
+}
+function hex2(v, digits) {
+  let h = Math.floor(v).toString(16);
+  while (h.length < digits) h = '0' + h;
+  return h;
+}
+function normHexHash(c) {
+  if (!c) return "#000000";
+  const s = String(c).trim();
+  return s.startsWith("#") ? s : ("#" + s);
+}
+
+// pick colors with forbidden check + “контраст предпочтение” через попытки
+function setRandomColorsWithCtrPreference() {
+  const pref = PRESETS[ACTIVE_PRESET]?.ctrPrefW || {LOW:0.33, MID:0.34, HI:0.33};
+  const want = weightedPick([
+    {v:"LOW", w:pref.LOW},
+    {v:"MID", w:pref.MID},
+    {v:"HI",  w:pref.HI},
+  ]);
+
+  let best = null; // {bg, wvs, de}
+
+  for (let i = 0; i < 220; i++) {
+    const bg = randomPaletteHex();
+    const wv = randomPaletteHex();
+    if (bg === wv) continue;
+    if (isForbiddenPair(bg, wv)) continue;
+
+    const de = deltaE76_hex(bg, wv);
+    const tag = contrastBucketFromDE(de);
+
+    if (tag === want) {
+      bgColor = color("#" + bg);
+      ellipseColor = color("#" + wv);
+      return;
+    }
+
+    // keep closest if not found quickly
+    if (!best) best = {bg, wv, de};
+    else {
+      const bestTag = contrastBucketFromDE(best.de);
+      // prefer closer to desired bucket by simple heuristic:
+      // if want HI -> bigger de, want LOW -> smaller de, else mid closer to thresholds center
+      if (want === "HI" && de > best.de) best = {bg, wv, de};
+      if (want === "LOW" && de < best.de) best = {bg, wv, de};
+      if (want === "MID") {
+        const midTarget = (CTR_T1 + CTR_T2) * 0.5;
+        if (Math.abs(de - midTarget) < Math.abs(best.de - midTarget)) best = {bg, wv, de};
+      }
+    }
+  }
+
+  // fallback
+  if (best) {
+    bgColor = color("#" + best.bg);
+    ellipseColor = color("#" + best.wv);
+    return;
+  }
+
+  // ultimate fallback
+  bgColor = color("#" + randomPaletteHex());
+  ellipseColor = color("#" + randomPaletteHex());
+}
+
+// ========================
+// Random helpers
+// ========================
 function quantize(v, step) {
   if (!step || step <= 0) return v;
   return Math.round(v / step) * step;
 }
-
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function lerp(a, b, t) { return a + (b - a) * t; }
-
-// ========================
-// RANDOM EXCLUDING RANGE (for ellipseSpacing)
-// ========================
-const RANDOM_SPACING_FORBIDDEN_MIN = -1;
-const RANDOM_SPACING_FORBIDDEN_MAX = 10;
 
 function randomExcludingRange(min, max, forbidMin, forbidMax) {
   if (forbidMax < min || forbidMin > max) return random(min, max);
@@ -166,8 +307,19 @@ function randomExcludingRange(min, max, forbidMin, forbidMax) {
   return b0 + (pick - lenA);
 }
 
+function weightedPick(items) {
+  let sum = 0;
+  for (const it of items) sum += it.w;
+  let r = random(sum);
+  for (const it of items) {
+    r -= it.w;
+    if (r <= 0) return it.v;
+  }
+  return items[0].v;
+}
+
 // ========================
-// lineSpacing depends on maxEllipseHeight (UI-less)
+// lineSpacing depends on maxEllipseHeight (as in your tool)
 // ========================
 function syncLineSpacingToHeight() {
   const hMin = PARAM_RANGES.maxEllipseHeight.min;
@@ -181,53 +333,40 @@ function syncLineSpacingToHeight() {
 }
 
 // ========================
-// SET RANDOM COLORS (respect forbidden pairs)
+// Preset sampling for ellipseSpacing
 // ========================
-function setRandomColors() {
-  let bgHex = null;
-  let ellHex = null;
-
-  for (let i = 0; i < 400; i++) {
-    bgHex = randomPaletteHex();
-    ellHex = randomPaletteHex();
-    if (ellHex === bgHex) continue;
-    if (isForbiddenPair(bgHex, ellHex)) continue;
-    break;
+function samplePresetSpacing() {
+  const mix = PRESETS[ACTIVE_PRESET]?.spacingMix || [
+    {min:-15, max:-4, w:0.33},
+    {min:-4,  max:14, w:0.34},
+    {min:14,  max:30, w:0.33},
+  ];
+  const seg = weightedPick(mix.map(s => ({ v:s, w:s.w })));
+  // still respect forbidden exclusion a bit: we avoid [-1..10] by pushing away
+  let v = Math.round(random(seg.min, seg.max));
+  if (v >= RANDOM_SPACING_FORBIDDEN_MIN && v <= RANDOM_SPACING_FORBIDDEN_MAX) {
+    // nudge out of forbidden band
+    if (v < (RANDOM_SPACING_FORBIDDEN_MIN + RANDOM_SPACING_FORBIDDEN_MAX) * 0.5) v = RANDOM_SPACING_FORBIDDEN_MIN - 1;
+    else v = RANDOM_SPACING_FORBIDDEN_MAX + 1;
   }
-
-  if (!bgHex) bgHex = randomPaletteHex();
-  if (!ellHex) {
-    for (let i = 0; i < 400; i++) {
-      const c = randomPaletteHex();
-      if (c === bgHex) continue;
-      if (!isForbiddenPair(bgHex, c)) { ellHex = c; break; }
-    }
-    if (!ellHex) ellHex = randomPaletteHex();
-  }
-
-  bgColor = color("#" + bgHex);
-  ellipseColor = color("#" + ellHex);
+  return v;
 }
 
 // ========================
-// DeltaE76 from HEX + auto thresholds for THIS palette
+// DeltaE76 + thresholds
 // ========================
-let CTR_T1 = 18; // будет пересчитано
-let CTR_T2 = 40; // будет пересчитано
+let CTR_T1 = 18;
+let CTR_T2 = 40;
 
 function hexToRgb(hex) {
   const h = String(hex).trim().replace(/^#/, "");
   const n = parseInt(h, 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
-
-// sRGB (0..255) -> linear RGB (0..1)
 function srgbToLinear(u255) {
   const u = u255 / 255;
   return (u <= 0.04045) ? (u / 12.92) : Math.pow((u + 0.055) / 1.055, 2.4);
 }
-
-// linear RGB -> XYZ (D65)
 function rgbToXyz(r255, g255, b255) {
   const r = srgbToLinear(r255);
   const g = srgbToLinear(g255);
@@ -239,8 +378,6 @@ function rgbToXyz(r255, g255, b255) {
 
   return { X, Y, Z };
 }
-
-// XYZ -> Lab (D65 reference white)
 function xyzToLab(X, Y, Z) {
   const Xn = 0.95047, Yn = 1.00000, Zn = 1.08883;
   const f = (t) => (t > 0.008856) ? Math.cbrt(t) : (7.787 * t + 16 / 116);
@@ -251,23 +388,19 @@ function xyzToLab(X, Y, Z) {
 
   return { L: 116 * fy - 16, a: 500 * (fx - fy), b: 200 * (fy - fz) };
 }
-
 function rgbToLab(r, g, b) {
   const { X, Y, Z } = rgbToXyz(r, g, b);
   return xyzToLab(X, Y, Z);
 }
-
 function deltaE76_rgb(rgb1, rgb2) {
   const p = rgbToLab(rgb1.r, rgb1.g, rgb1.b);
   const q = rgbToLab(rgb2.r, rgb2.g, rgb2.b);
   const dL = p.L - q.L, da = p.a - q.a, db = p.b - q.b;
   return Math.sqrt(dL * dL + da * da + db * db);
 }
-
 function deltaE76_hex(hex1, hex2) {
   return deltaE76_rgb(hexToRgb(hex1), hexToRgb(hex2));
 }
-
 function percentile(sortedArr, p) {
   if (!sortedArr.length) return 0;
   const idx = (sortedArr.length - 1) * p;
@@ -277,8 +410,6 @@ function percentile(sortedArr, p) {
   const t = idx - lo;
   return sortedArr[lo] * (1 - t) + sortedArr[hi] * t;
 }
-
-// Автокалибровка порогов ctr под текущую палитру (без forbidden пар)
 function initContrastThresholds() {
   const vals = [];
 
@@ -293,21 +424,103 @@ function initContrastThresholds() {
 
   vals.sort((x, y) => x - y);
 
-  // Делим на 3 класса по распределению палитры
   CTR_T1 = percentile(vals, 0.33);
   CTR_T2 = percentile(vals, 0.66);
   if (CTR_T2 <= CTR_T1) CTR_T2 = CTR_T1 + 1;
 
   console.log("[ctr thresholds]", { CTR_T1, CTR_T2, samples: vals.length });
 }
+function contrastBucketFromDE(de) {
+  if (de < CTR_T1) return "LOW";
+  if (de < CTR_T2) return "MID";
+  return "HI";
+}
+
+// ========================
+// TAGS
+// ========================
+function rgbToHsl(r255, g255, b255) {
+  const r = r255 / 255, g = g255 / 255, b = b255 / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  const l = (max + min) / 2;
+  const s = (d === 0) ? 0 : d / (1 - Math.abs(2 * l - 1));
+
+  return { h, s: s * 100, l: l * 100 };
+}
+function lightnessTagFromHex(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  const { l } = rgbToHsl(r, g, b);
+  if (l < 35) return "dark";
+  if (l > 70) return "light";
+  return "mid";
+}
+function colorTag() {
+  const bgHex = normHex(colorToHex(bgColor));
+  const wvsHex = normHex(colorToHex(ellipseColor));
+  return `bg-${lightnessTagFromHex(bgHex)}__wvs-${lightnessTagFromHex(wvsHex)}`;
+}
+function contrastTag() {
+  const bgHex = normHex(colorToHex(bgColor));
+  const wvsHex = normHex(colorToHex(ellipseColor));
+  const de = deltaE76_hex(bgHex, wvsHex);
+  return `ctr-${contrastBucketFromDE(de)}`;
+}
+function heightTag() {
+  const h = params.maxEllipseHeight;
+  if (h < 220) return "h-LOW";
+  if (h < 360) return "h-MID";
+  return "h-TALL";
+}
+function widthTag() {
+  const s = params.ellipseSpacing;
+  if (s < 0) return "w-TIGHT";
+  if (s < 10) return "w-MID";
+  return "w-WIDE";
+}
+function skewTag() {
+  const sk = Math.abs(params.skewAngleX) + Math.abs(params.skewAngleY);
+  if (sk < 0.2) return "sk-LOW";
+  if (sk < 0.7) return "sk-MID";
+  return "sk-HI";
+}
+function amplitudeTag() {
+  const a = params.waveAmplitude;
+  if (a < 25) return "amp-LOW";
+  if (a < 60) return "amp-MID";
+  return "amp-HI";
+}
+function moodTag() {
+  return PRESETS[ACTIVE_PRESET]?.tag || "m-LOW";
+}
+function buildHashtagSlug() {
+  return [
+    moodTag(),
+    colorTag(),
+    contrastTag(),
+    heightTag(),
+    widthTag(),
+    skewTag(),
+    amplitudeTag()
+  ].join("__");
+}
 
 // ========================
 // SETUP / DRAW
 // ========================
 function setup() {
-  const canvasHeight = 600;
-  const canvasWidth = 1200;
-  const canvas = createCanvas(canvasWidth, canvasHeight, WEBGL);
+  const canvas = createCanvas(1200, 600, WEBGL);
   canvas.parent('canvas-container');
 
   const d = Math.min(2, window.devicePixelRatio || 1);
@@ -323,7 +536,7 @@ function setup() {
     skewAngleY: 0,
     maxEllipseHeight: 180,
     heightRandomness: 0.5,
-    chaos: 0,
+    chaos: 0,               // как в оригинале — random пропускал chaos
     waveAmplitude: 50,
     waveOffset: random(1000),
     lineCopies: 0,
@@ -338,14 +551,21 @@ function setup() {
     posZ: -500
   };
 
-  setRandomColors();
-  initContrastThresholds(); // ✅ важно: пороги ctr считаем по палитре
+  initContrastThresholds();
+  applyPresetFromUI();
+  setRandomColorsWithCtrPreference();
   syncLineSpacingToHeight();
   generateEllipses(false);
 
   initSquarePreviewBuffer();
 
-  // ✅ Batch ZIP buttons
+  // UI wiring
+  document.getElementById('presetSelect')?.addEventListener('change', () => {
+    applyPresetFromUI();
+    // slight refresh for preview
+    generateRandom();
+  });
+
   document.getElementById('batchZipBtn')?.addEventListener('click', async () => {
     const n = parseInt(document.getElementById('batchCount')?.value ?? "1", 10);
     const count = Math.max(1, Math.min(5000, isNaN(n) ? 1 : n));
@@ -355,6 +575,17 @@ function setup() {
   document.getElementById('batchStopBtn')?.addEventListener('click', () => {
     stopBatchExport();
   });
+
+  // optional: quick preview random
+  document.getElementById('previewRandomBtn')?.addEventListener('click', () => {
+    generateRandom();
+  });
+}
+
+function applyPresetFromUI() {
+  const sel = document.getElementById('presetSelect');
+  const v = (sel?.value || "LOW").toUpperCase();
+  ACTIVE_PRESET = PRESETS[v] ? v : "LOW";
 }
 
 function draw() {
@@ -388,7 +619,6 @@ function initSquarePreviewBuffer() {
   squarePreviewGfx.smooth();
   squarePreviewGfx.setAttributes?.('antialias', true);
 }
-
 function renderSquarePreview() {
   if (!squarePreviewGfx) return;
 
@@ -496,20 +726,6 @@ function generateEllipses(preserveRandom = true) {
 // ========================
 // BADGE + WEBGL HELPERS
 // ========================
-function normHexHash(c) {
-  if (!c) return "#000000";
-  const s = String(c).trim();
-  return s.startsWith("#") ? s : ("#" + s);
-}
-function colorToHex(c) {
-  if (!c) return '#000000';
-  return '#' + hex2(red(c), 2) + hex2(green(c), 2) + hex2(blue(c), 2);
-}
-function hex2(v, digits) {
-  let h = Math.floor(v).toString(16);
-  while (h.length < digits) h = '0' + h;
-  return h;
-}
 function disableDepthTest(gfx) {
   const gl = gfx?._renderer?.GL;
   if (gl) gl.disable(gl.DEPTH_TEST);
@@ -522,7 +738,6 @@ function clearDepthBuffer(gfx) {
   const gl = gfx?._renderer?.GL;
   if (gl) gl.clear(gl.DEPTH_BUFFER_BIT);
 }
-
 function getSafeRect(w, h) {
   const ar = w / h;
   const isBanner = (w > h) && Math.abs(ar - 2) < 0.07;
@@ -532,7 +747,6 @@ function getSafeRect(w, h) {
   }
   return { x: 0, y: 0, w, h };
 }
-
 function drawBadgeOverlayToGfx(gfx, exportW, exportH) {
   if (!exportShowLogo) return;
   if (!logoImg) return;
@@ -593,125 +807,56 @@ function drawBadgeOverlayToGfx(gfx, exportW, exportH) {
 }
 
 // ========================
-// RANDOM (matches original rules)
+// RANDOM (matches original logic)
+// - ellipseCount fixed to max (50)
+// - skip posX/posY/posZ/chaos
+// - lineSpacing computed from maxEllipseHeight
+// - ellipseSpacing avoids [-1..10]
+// - BUT: preset influences main ranges + spacing distribution + color ctr preference
 // ========================
 function generateRandom() {
   params.ellipseCount = MAX_ELLIPSE_COUNT;
 
+  const preset = PRESETS[ACTIVE_PRESET] || PRESETS.LOW;
+
+  // 1) base random as before
   for (const key in params) {
     if (['posX','posY','posZ','chaos'].includes(key)) continue;
     if (key === 'lineSpacing') continue;
     if (key === 'ellipseCount') continue;
 
-    const r = PARAM_RANGES[key];
+    // use preset override if exists, else use base range
+    const pr = preset.ranges?.[key];
+    const r = pr || PARAM_RANGES[key];
     if (!r) continue;
+
+    const min = r.min;
+    const max = r.max;
+    const step = r.step ?? 0;
 
     let v;
     if (key === 'ellipseSpacing') {
-      v = randomExcludingRange(r.min, r.max, RANDOM_SPACING_FORBIDDEN_MIN, RANDOM_SPACING_FORBIDDEN_MAX);
+      // preset-based spacing (with some variety)
+      v = samplePresetSpacing();
     } else {
-      v = random(r.min, r.max);
+      v = random(min, max);
     }
 
-    v = quantize(v, r.step);
+    v = quantize(v, step);
     if (r.int) v = Math.round(v);
     if (key === 'lineCopies') v = Math.max(0, Math.floor(v));
 
     params[key] = v;
   }
 
+  // 2) lineSpacing from height
   syncLineSpacingToHeight();
-  setRandomColors();
+
+  // 3) colors with ctr preference
+  setRandomColorsWithCtrPreference();
+
+  // 4) refresh base noise so shape changes (important)
   generateEllipses(false);
-}
-
-// ========================
-// TAGS
-// ========================
-function rgbToHsl(r255, g255, b255) {
-  const r = r255 / 255, g = g255 / 255, b = b255 / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-
-  let h = 0;
-  if (d !== 0) {
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60;
-    if (h < 0) h += 360;
-  }
-
-  const l = (max + min) / 2;
-  const s = (d === 0) ? 0 : d / (1 - Math.abs(2 * l - 1));
-
-  return { h, s: s * 100, l: l * 100 };
-}
-
-function lightnessTagFromHex(hex) {
-  const { r, g, b } = hexToRgb(hex);
-  const { l } = rgbToHsl(r, g, b);
-  if (l < 35) return "dark";
-  if (l > 70) return "light";
-  return "mid";
-}
-
-function colorTag() {
-  const bgHex = normHex(colorToHex(bgColor));
-  const wvsHex = normHex(colorToHex(ellipseColor));
-  return `bg-${lightnessTagFromHex(bgHex)}__wvs-${lightnessTagFromHex(wvsHex)}`;
-}
-
-function contrastTag() {
-  const bgHex = normHex(colorToHex(bgColor));
-  const wvsHex = normHex(colorToHex(ellipseColor));
-
-  const de = deltaE76_hex(bgHex, wvsHex);
-
-  if (de < CTR_T1) return "ctr-LOW";
-  if (de < CTR_T2) return "ctr-MID";
-  return "ctr-HI";
-}
-
-// ---- Geometry tags ----
-function heightTag() {
-  const h = params.maxEllipseHeight;
-  if (h < 220) return "h-LOW";
-  if (h < 360) return "h-MID";
-  return "h-TALL";
-}
-
-function widthTag() {
-  const s = params.ellipseSpacing;
-  if (s < 0) return "w-TIGHT";
-  if (s < 10) return "w-MID";
-  return "w-WIDE";
-}
-
-function skewTag() {
-  const sk = Math.abs(params.skewAngleX) + Math.abs(params.skewAngleY);
-  if (sk < 0.2) return "sk-LOW";
-  if (sk < 0.7) return "sk-MID";
-  return "sk-HI";
-}
-
-function amplitudeTag() {
-  const a = params.waveAmplitude;
-  if (a < 25) return "amp-LOW";
-  if (a < 60) return "amp-MID";
-  return "amp-HI";
-}
-
-function buildHashtagSlug() {
-  return [
-    colorTag(),
-    contrastTag(),
-    heightTag(),
-    widthTag(),
-    skewTag(),
-    amplitudeTag()
-  ].join("__");
 }
 
 // ========================
@@ -733,7 +878,7 @@ function gfxToBlob(canvas, mime = "image/png") {
 }
 
 async function renderHighResBlob(targetW, targetH) {
-  // SSAA: 2x для <= 1400
+  // SSAA: 2x for <= 1400
   let ss = 1;
   const maxSide = Math.max(targetW, targetH);
   if (maxSide <= 1400) ss = 2;
@@ -783,10 +928,12 @@ async function exportBatchZip(count) {
   const zip = new JSZip();
   zip.file(
     "readme.txt",
-`Generated by Zvuk Playlist Generator (batch export)
+`Generated by Zvuk Covers (batch export)
+Preset: ${ACTIVE_PRESET}
 Count: ${count}
 Sizes: 1000x1000, 534x530, 640x320
 Tags:
+- m-(LOW|MID|MAX)
 - bg-(dark|mid|light)
 - wvs-(dark|mid|light)
 - ctr-(LOW|MID|HI)  (DeltaE76 + auto thresholds from palette)
@@ -845,7 +992,7 @@ Date: ${new Date().toISOString()}
       compressionOptions: { level: 6 },
     });
 
-    const fileName = `covers_${count}x3_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.zip`;
+    const fileName = `covers_${ACTIVE_PRESET}_${count}x3_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.zip`;
     saveAs(outBlob, fileName);
 
     setBatchStatus(`Готово. ZIP скачан: ${fileName}`);
