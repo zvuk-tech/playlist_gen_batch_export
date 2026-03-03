@@ -31,7 +31,7 @@ const paletteColors = [
   "D7D9FF","2CB1FF","FF9535","FF49A0","00DBDB","765BFF"
 ];
 
-// Forbidden pairs (as you had)
+// Forbidden pairs
 const forbiddenPairsRaw = [
   ["AEEEFF","CBF2EC"],
   ["B9FF8E","AEEEFF"],
@@ -71,83 +71,80 @@ const forbiddenPairsRaw = [
 
 // ========================
 // PRESETS (LOW / MID / MAX)
-// “усилим, но не сильно” = смещаем вероятности,
-// но НЕ загоняем spacing в одно состояние.
 // ========================
 const PRESETS = {
   LOW: {
     tag: "m-LOW",
-    // random ranges modifier (soft)
     ranges: {
-      waveAmplitude:   { min: 0,  max: 40, step: 1 },
-      maxEllipseHeight:{ min: 120,max: 300,step: 10 },
-      skewAngleX:      { min: -0.24, max: 0.24, step: 0.01 },
-      skewAngleY:      { min: -0.18, max: 0.18, step: 0.01 },
-      rotateXAngle:    { min: -0.30, max: 0.30, step: 0.01 },
-      rotateYAngle:    { min: -0.30, max: 0.30, step: 0.01 },
-      rotateZAngle:    { min: -0.30, max: 0.30, step: 0.01 },
-      ellipseWidth:    { min: 25, max: 90, step: 1, int: true },
-      heightRandomness:{ min: 0.10, max: 0.65, step: 0.01 },
-      lineCopies:      { min: 0, max: 2, step: 1, int: true },
+      waveAmplitude:    { min: 0,   max: 40,  step: 1 },
+      maxEllipseHeight: { min: 120, max: 300, step: 10 },
+      skewAngleX:       { min: -0.24, max: 0.24, step: 0.01 },
+      skewAngleY:       { min: -0.18, max: 0.18, step: 0.01 },
+      rotateXAngle:     { min: -0.30, max: 0.30, step: 0.01 },
+      rotateYAngle:     { min: -0.30, max: 0.30, step: 0.01 },
+      rotateZAngle:     { min: -0.30, max: 0.30, step: 0.01 },
+      ellipseWidth:     { min: 25,  max: 90,  step: 1, int: true },
+      heightRandomness: { min: 0.10, max: 0.65, step: 0.01 },
+      lineCopies:       { min: 0,   max: 2,   step: 1, int: true },
     },
     spacingMix: [
-      { min: -15, max: -2, w: 0.18 }, // tight sometimes
-      { min: -2,  max: 14, w: 0.44 }, // mid often
-      { min: 14,  max: 30, w: 0.38 }, // wide often
+      { min: -15, max: -2, w: 0.18 },
+      { min: -2,  max: 14, w: 0.44 },
+      { min: 14,  max: 30, w: 0.38 },
     ],
-    ctrPrefW: { LOW: 0.75, MID: 0.22, HI: 0.03 }
+    // (если хочешь — можно поставить более контрастно)
+    ctrPrefW: { LOW: 0.65, MID: 0.30, HI: 0.05 }
   },
 
   MID: {
     tag: "m-MID",
     ranges: {
-      waveAmplitude:   { min: 25, max: 75, step: 1 },
-      maxEllipseHeight:{ min: 170,max: 440,step: 10 },
-      skewAngleX:      { min: -0.48, max: 0.48, step: 0.01 },
-      skewAngleY:      { min: -0.32, max: 0.32, step: 0.01 },
-      rotateXAngle:    { min: -0.65, max: 0.65, step: 0.01 },
-      rotateYAngle:    { min: -0.65, max: 0.65, step: 0.01 },
-      rotateZAngle:    { min: -0.65, max: 0.65, step: 0.01 },
-      ellipseWidth:    { min: 35, max: 130, step: 1, int: true },
-      heightRandomness:{ min: 0.22, max: 0.92, step: 0.01 },
-      lineCopies:      { min: 0, max: 4, step: 1, int: true },
+      waveAmplitude:    { min: 25,  max: 75,  step: 1 },
+      maxEllipseHeight: { min: 170, max: 440, step: 10 },
+      skewAngleX:       { min: -0.48, max: 0.48, step: 0.01 },
+      skewAngleY:       { min: -0.32, max: 0.32, step: 0.01 },
+      rotateXAngle:     { min: -0.65, max: 0.65, step: 0.01 },
+      rotateYAngle:     { min: -0.65, max: 0.65, step: 0.01 },
+      rotateZAngle:     { min: -0.65, max: 0.65, step: 0.01 },
+      ellipseWidth:     { min: 35,  max: 130, step: 1, int: true },
+      heightRandomness: { min: 0.22, max: 0.92, step: 0.01 },
+      lineCopies:       { min: 0,   max: 4,   step: 1, int: true },
     },
     spacingMix: [
       { min: -15, max: -3, w: 0.45 },
       { min: -3,  max: 16, w: 0.37 },
       { min: 16,  max: 30, w: 0.18 },
     ],
-    ctrPrefW: { LOW: 0.10, MID: 0.55, HI: 0.35 }
+    ctrPrefW: { LOW: 0.15, MID: 0.55, HI: 0.30 }
   },
 
   MAX: {
     tag: "m-MAX",
     ranges: {
-      waveAmplitude:   { min: 60, max: 100, step: 1 },
-      maxEllipseHeight:{ min: 260,max: 500,step: 10 },
-      skewAngleX:      { min: -0.785, max: 0.785, step: 0.01 },
-      skewAngleY:      { min: -0.60,  max: 0.60,  step: 0.01 },
-      rotateXAngle:    { min: -1, max: 1, step: 0.01 },
-      rotateYAngle:    { min: -1, max: 1, step: 0.01 },
-      rotateZAngle:    { min: -1, max: 1, step: 0.01 },
-      ellipseWidth:    { min: 60, max: 150, step: 1, int: true },
-      heightRandomness:{ min: 0.40, max: 1.00, step: 0.01 },
-      lineCopies:      { min: 1, max: 5, step: 1, int: true },
+      waveAmplitude:    { min: 60,  max: 100, step: 1 },
+      maxEllipseHeight: { min: 260, max: 500, step: 10 },
+      skewAngleX:       { min: -0.785, max: 0.785, step: 0.01 },
+      skewAngleY:       { min: -0.60,  max: 0.60,  step: 0.01 },
+      rotateXAngle:     { min: -1,  max: 1,   step: 0.01 },
+      rotateYAngle:     { min: -1,  max: 1,   step: 0.01 },
+      rotateZAngle:     { min: -1,  max: 1,   step: 0.01 },
+      ellipseWidth:     { min: 60,  max: 150, step: 1, int: true },
+      heightRandomness: { min: 0.40, max: 1.00, step: 0.01 },
+      lineCopies:       { min: 1,   max: 5,   step: 1, int: true },
     },
     spacingMix: [
-      { min: -15, max: -4, w: 0.65 }, // tight often
-      { min: -4,  max: 14, w: 0.25 }, // mid sometimes
-      { min: 14,  max: 30, w: 0.10 }, // wide rare but exists
+      { min: -15, max: -4, w: 0.65 },
+      { min: -4,  max: 14, w: 0.25 },
+      { min: 14,  max: 30, w: 0.10 },
     ],
-    ctrPrefW: { LOW: 0.02, MID: 0.15, HI: 0.83 }
+    ctrPrefW: { LOW: 0.03, MID: 0.20, HI: 0.77 }
   }
 };
 
 let ACTIVE_PRESET = "LOW";
 
 // ========================
-// RANDOM BASE RANGES (as in original HTML sliders)
-// (Presets override some of these, but base stays consistent.)
+// BASE RANGES
 // ========================
 const PARAM_RANGES = {
   skewAngleX:        { min: -0.785, max: 0.785, step: 0.01 },
@@ -156,7 +153,7 @@ const PARAM_RANGES = {
   maxEllipseHeight:  { min: 100, max: 500, step: 10 },
   heightRandomness:  { min: 0, max: 1, step: 0.01 },
 
-  chaos:             { min: 0, max: 0.52, step: 0.01 }, // NOTE: in original random you skipped chaos
+  chaos:             { min: 0, max: 0.52, step: 0.01 },
 
   waveAmplitude:     { min: 0, max: 100, step: 1 },
   waveOffset:        { min: 0, max: 1000, step: 1 },
@@ -176,11 +173,9 @@ const PARAM_RANGES = {
   posZ:              { min: -500, max: 500, step: 1, int: true },
 };
 
-// spacing exclusion for random button
 const RANDOM_SPACING_FORBIDDEN_MIN = -1;
 const RANDOM_SPACING_FORBIDDEN_MAX = 10;
 
-// ellipse count max as in UI max=50
 const MAX_ELLIPSE_COUNT = 50;
 
 // ========================
@@ -226,59 +221,6 @@ function normHexHash(c) {
   return s.startsWith("#") ? s : ("#" + s);
 }
 
-// pick colors with forbidden check + “контраст предпочтение” через попытки
-function setRandomColorsWithCtrPreference() {
-  const pref = PRESETS[ACTIVE_PRESET]?.ctrPrefW || {LOW:0.33, MID:0.34, HI:0.33};
-  const want = weightedPick([
-    {v:"LOW", w:pref.LOW},
-    {v:"MID", w:pref.MID},
-    {v:"HI",  w:pref.HI},
-  ]);
-
-  let best = null; // {bg, wvs, de}
-
-  for (let i = 0; i < 220; i++) {
-    const bg = randomPaletteHex();
-    const wv = randomPaletteHex();
-    if (bg === wv) continue;
-    if (isForbiddenPair(bg, wv)) continue;
-
-    const de = deltaE76_hex(bg, wv);
-    const tag = contrastBucketFromDE(de);
-
-    if (tag === want) {
-      bgColor = color("#" + bg);
-      ellipseColor = color("#" + wv);
-      return;
-    }
-
-    // keep closest if not found quickly
-    if (!best) best = {bg, wv, de};
-    else {
-      const bestTag = contrastBucketFromDE(best.de);
-      // prefer closer to desired bucket by simple heuristic:
-      // if want HI -> bigger de, want LOW -> smaller de, else mid closer to thresholds center
-      if (want === "HI" && de > best.de) best = {bg, wv, de};
-      if (want === "LOW" && de < best.de) best = {bg, wv, de};
-      if (want === "MID") {
-        const midTarget = (CTR_T1 + CTR_T2) * 0.5;
-        if (Math.abs(de - midTarget) < Math.abs(best.de - midTarget)) best = {bg, wv, de};
-      }
-    }
-  }
-
-  // fallback
-  if (best) {
-    bgColor = color("#" + best.bg);
-    ellipseColor = color("#" + best.wv);
-    return;
-  }
-
-  // ultimate fallback
-  bgColor = color("#" + randomPaletteHex());
-  ellipseColor = color("#" + randomPaletteHex());
-}
-
 // ========================
 // Random helpers
 // ========================
@@ -319,7 +261,7 @@ function weightedPick(items) {
 }
 
 // ========================
-// lineSpacing depends on maxEllipseHeight (as in your tool)
+// lineSpacing depends on maxEllipseHeight
 // ========================
 function syncLineSpacingToHeight() {
   const hMin = PARAM_RANGES.maxEllipseHeight.min;
@@ -342,10 +284,9 @@ function samplePresetSpacing() {
     {min:14,  max:30, w:0.33},
   ];
   const seg = weightedPick(mix.map(s => ({ v:s, w:s.w })));
-  // still respect forbidden exclusion a bit: we avoid [-1..10] by pushing away
+
   let v = Math.round(random(seg.min, seg.max));
   if (v >= RANDOM_SPACING_FORBIDDEN_MIN && v <= RANDOM_SPACING_FORBIDDEN_MAX) {
-    // nudge out of forbidden band
     if (v < (RANDOM_SPACING_FORBIDDEN_MIN + RANDOM_SPACING_FORBIDDEN_MAX) * 0.5) v = RANDOM_SPACING_FORBIDDEN_MIN - 1;
     else v = RANDOM_SPACING_FORBIDDEN_MAX + 1;
   }
@@ -434,6 +375,53 @@ function contrastBucketFromDE(de) {
   if (de < CTR_T1) return "LOW";
   if (de < CTR_T2) return "MID";
   return "HI";
+}
+
+// ========================
+// Colors with ctr preference
+// ========================
+function setRandomColorsWithCtrPreference() {
+  const pref = PRESETS[ACTIVE_PRESET]?.ctrPrefW || {LOW:0.33, MID:0.34, HI:0.33};
+  const want = weightedPick([
+    {v:"LOW", w:pref.LOW},
+    {v:"MID", w:pref.MID},
+    {v:"HI",  w:pref.HI},
+  ]);
+
+  let best = null;
+
+  for (let i = 0; i < 220; i++) {
+    const bg = randomPaletteHex();
+    const wv = randomPaletteHex();
+    if (bg === wv) continue;
+    if (isForbiddenPair(bg, wv)) continue;
+
+    const de = deltaE76_hex(bg, wv);
+    const tag = contrastBucketFromDE(de);
+
+    if (tag === want) {
+      bgColor = color("#" + bg);
+      ellipseColor = color("#" + wv);
+      return;
+    }
+
+    if (!best) best = {bg, wv, de};
+    else {
+      const midTarget = (CTR_T1 + CTR_T2) * 0.5;
+      if (want === "HI" && de > best.de) best = {bg, wv, de};
+      if (want === "LOW" && de < best.de) best = {bg, wv, de};
+      if (want === "MID" && Math.abs(de - midTarget) < Math.abs(best.de - midTarget)) best = {bg, wv, de};
+    }
+  }
+
+  if (best) {
+    bgColor = color("#" + best.bg);
+    ellipseColor = color("#" + best.wv);
+    return;
+  }
+
+  bgColor = color("#" + randomPaletteHex());
+  ellipseColor = color("#" + randomPaletteHex());
 }
 
 // ========================
@@ -536,7 +524,7 @@ function setup() {
     skewAngleY: 0,
     maxEllipseHeight: 180,
     heightRandomness: 0.5,
-    chaos: 0,               // как в оригинале — random пропускал chaos
+    chaos: 0,
     waveAmplitude: 50,
     waveOffset: random(1000),
     lineCopies: 0,
@@ -559,10 +547,8 @@ function setup() {
 
   initSquarePreviewBuffer();
 
-  // UI wiring
   document.getElementById('presetSelect')?.addEventListener('change', () => {
     applyPresetFromUI();
-    // slight refresh for preview
     generateRandom();
   });
 
@@ -576,10 +562,17 @@ function setup() {
     stopBatchExport();
   });
 
-  // optional: quick preview random
-  document.getElementById('previewRandomBtn')?.addEventListener('click', () => {
-    generateRandom();
-  });
+  // ✅ “железно” для GitHub: onclick + лог
+  const prev = document.getElementById('previewRandomBtn');
+  if (prev) {
+    prev.onclick = () => {
+      console.log("CLICK previewRandomBtn");
+      generateRandom();
+    };
+  }
+
+  // первый кадр — уже рандомный
+  generateRandom();
 }
 
 function applyPresetFromUI() {
@@ -609,7 +602,7 @@ function draw() {
 }
 
 // ========================
-// SQUARE PREVIEW (EXACT as square export framing)
+// SQUARE PREVIEW
 // ========================
 function initSquarePreviewBuffer() {
   squarePreviewSize = Math.min(width, height); // 600
@@ -629,7 +622,7 @@ function renderSquarePreview() {
 }
 
 // ========================
-// RENDER SCENE (shared by preview + export)
+// RENDER SCENE
 // ========================
 function renderSceneTo(gfx, targetW, targetH) {
   const baseW = 640;
@@ -807,55 +800,35 @@ function drawBadgeOverlayToGfx(gfx, exportW, exportH) {
 }
 
 // ========================
-// RANDOM (matches original logic)
-// - ellipseCount fixed to max (50)
-// - skip posX/posY/posZ/chaos
-// - lineSpacing computed from maxEllipseHeight
-// - ellipseSpacing avoids [-1..10]
-// - BUT: preset influences main ranges + spacing distribution + color ctr preference
+// RANDOM
 // ========================
 function generateRandom() {
   params.ellipseCount = MAX_ELLIPSE_COUNT;
 
   const preset = PRESETS[ACTIVE_PRESET] || PRESETS.LOW;
 
-  // 1) base random as before
   for (const key in params) {
     if (['posX','posY','posZ','chaos'].includes(key)) continue;
     if (key === 'lineSpacing') continue;
     if (key === 'ellipseCount') continue;
 
-    // use preset override if exists, else use base range
     const pr = preset.ranges?.[key];
     const r = pr || PARAM_RANGES[key];
     if (!r) continue;
 
-    const min = r.min;
-    const max = r.max;
-    const step = r.step ?? 0;
-
     let v;
-    if (key === 'ellipseSpacing') {
-      // preset-based spacing (with some variety)
-      v = samplePresetSpacing();
-    } else {
-      v = random(min, max);
-    }
+    if (key === 'ellipseSpacing') v = samplePresetSpacing();
+    else v = random(r.min, r.max);
 
-    v = quantize(v, step);
+    v = quantize(v, r.step ?? 0);
     if (r.int) v = Math.round(v);
     if (key === 'lineCopies') v = Math.max(0, Math.floor(v));
 
     params[key] = v;
   }
 
-  // 2) lineSpacing from height
   syncLineSpacingToHeight();
-
-  // 3) colors with ctr preference
   setRandomColorsWithCtrPreference();
-
-  // 4) refresh base noise so shape changes (important)
   generateEllipses(false);
 }
 
@@ -878,7 +851,6 @@ function gfxToBlob(canvas, mime = "image/png") {
 }
 
 async function renderHighResBlob(targetW, targetH) {
-  // SSAA: 2x for <= 1400
   let ss = 1;
   const maxSide = Math.max(targetW, targetH);
   if (maxSide <= 1400) ss = 2;
@@ -914,14 +886,8 @@ async function renderHighResBlob(targetW, targetH) {
 }
 
 async function exportBatchZip(count) {
-  if (typeof JSZip === "undefined") {
-    alert("JSZip не подключён.");
-    return;
-  }
-  if (typeof saveAs === "undefined") {
-    alert("FileSaver (saveAs) не подключён.");
-    return;
-  }
+  if (typeof JSZip === "undefined") { alert("JSZip не подключён."); return; }
+  if (typeof saveAs === "undefined") { alert("FileSaver (saveAs) не подключён."); return; }
 
   batchCancelRequested = false;
 
@@ -932,15 +898,6 @@ async function exportBatchZip(count) {
 Preset: ${ACTIVE_PRESET}
 Count: ${count}
 Sizes: 1000x1000, 534x530, 640x320
-Tags:
-- m-(LOW|MID|MAX)
-- bg-(dark|mid|light)
-- wvs-(dark|mid|light)
-- ctr-(LOW|MID|HI)  (DeltaE76 + auto thresholds from palette)
-- h-(LOW|MID|TALL)
-- w-(TIGHT|MID|WIDE)
-- sk-(LOW|MID|HI)
-- amp-(LOW|MID|HI)
 CTR thresholds: T1=${CTR_T1.toFixed(2)}  T2=${CTR_T2.toFixed(2)}
 Date: ${new Date().toISOString()}
 `
@@ -962,8 +919,6 @@ Date: ${new Date().toISOString()}
       }
 
       generateRandom();
-
-      setBatchStatus(`Рендер ${i}/${count}…`);
       await sleep0();
 
       const tags = buildHashtagSlug();
