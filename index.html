@@ -16,7 +16,8 @@
     :root{
       --bg:#0b0b0e; --panel:#111118; --border:rgba(255,255,255,.12);
       --text:#fff; --muted:rgba(255,255,255,.7);
-      --btn:#1f6fff; --btn2:#2a2a35;
+      --btn:#1f6fff; --btn2:#2a2a35; --btn3:#1d1d27;
+      --radius:16px;
     }
     *{box-sizing:border-box}
     body{
@@ -25,7 +26,7 @@
     }
     .wrap{
       display:grid;
-      grid-template-columns: 1fr 360px;
+      grid-template-columns: 1fr 380px;
       gap:16px;
       padding:16px;
       align-items:start;
@@ -34,7 +35,7 @@
     #canvas-container{
       background:#000;
       border:1px solid var(--border);
-      border-radius:16px;
+      border-radius:var(--radius);
       overflow:hidden;
       display:flex;
       justify-content:center;
@@ -44,13 +45,13 @@
     .panel{
       background:var(--panel);
       border:1px solid var(--border);
-      border-radius:16px;
+      border-radius:var(--radius);
       padding:14px;
     }
-    .title{font-size:14px; font-weight:700; margin:0 0 10px}
+    .title{font-size:14px; font-weight:800; margin:0 0 10px}
     .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-    input[type="number"]{
-      width:120px;
+    label{font-size:12px; color:var(--muted)}
+    select, input[type="number"]{
       padding:10px 10px;
       border-radius:12px;
       border:1px solid var(--border);
@@ -58,16 +59,20 @@
       color:var(--text);
       outline:none;
     }
+    select{ min-width:120px; }
+    input[type="number"]{ width:120px; }
     button{
       border:0;
       padding:10px 12px;
       border-radius:12px;
       color:var(--text);
       cursor:pointer;
-      font-weight:700;
+      font-weight:800;
+      background:var(--btn3);
     }
     #batchZipBtn{ background:var(--btn); }
     #batchStopBtn{ background:var(--btn2); }
+    #previewRandomBtn{ background:#232334; }
     #batchStatus{
       margin-top:10px;
       font-size:12px;
@@ -82,10 +87,6 @@
       line-height:1.35;
     }
     code{color:rgba(255,255,255,.78)}
-
-    /* ✅ всё “UI как раньше”, но скрыто */
-    .hidden-controls{ display:none; }
-
     @media (max-width: 980px){
       .wrap{ grid-template-columns: 1fr; }
       #canvas-container{ min-height:520px; }
@@ -102,80 +103,32 @@
     <div class="panel">
       <h1 class="title">ZIP Export</h1>
 
+      <div class="row" style="margin-bottom:10px">
+        <div style="display:flex; flex-direction:column; gap:6px">
+          <label>Preset</label>
+          <select id="presetSelect">
+            <option value="LOW">LOW</option>
+            <option value="MID">MID</option>
+            <option value="MAX">MAX</option>
+          </select>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:6px">
+          <label>Количество</label>
+          <input id="batchCount" type="number" min="1" max="5000" step="1" value="30" />
+        </div>
+      </div>
+
       <div class="row">
-        <input id="batchCount" type="number" min="1" max="5000" step="1" value="30" />
         <button id="batchZipBtn">Скачать ZIP</button>
         <button id="batchStopBtn">Стоп</button>
+        <button id="previewRandomBtn">Рандом превью</button>
       </div>
 
       <div id="batchStatus">Готов.</div>
 
       
     </div>
-  </div>
-
-  <!-- =========================================================
-       ✅ СКРЫТЫЕ КОНТРОЛЫ (чтобы generateRandom работал как раньше)
-       Это ТОЧНО те же id/min/max/step, что были в твоём полном HTML
-  ========================================================== -->
-  <div class="hidden-controls">
-
-    <!-- badge toggles (твоя логика setup() их ищет) -->
-    <input id="exportLogoToggle" type="checkbox">
-    <input id="exportPlaqueToggle" type="checkbox">
-
-    <!-- основные -->
-    <input id="ellipseCount" type="range" min="5" max="50" step="1" value="50">
-    <input id="ellipseSpacing" type="range" min="-15" max="30" step="1" value="-4">
-    <input id="ellipseWidth" type="range" min="25" max="150" step="1" value="25">
-
-    <!-- высоты -->
-    <input id="maxEllipseHeight" type="range" min="100" max="500" step="10" value="180">
-    <input id="heightRandomness" type="range" min="0" max="1" step="0.01" value="0.5">
-
-    <!-- волна -->
-    <input id="waveAmplitude" type="range" min="0" max="100" step="1" value="50">
-    <input id="waveOffset" type="range" min="0" max="1000" step="1" value="100">
-
-    <!-- линии -->
-    <input id="lineCopies" type="number" min="0" max="5" step="1" value="0">
-    <input id="lineSpacing" type="range" min="160" max="700" step="1" value="230">
-
-    <!-- вращения -->
-    <input id="rotateXAngle" type="range" min="-1" max="1" step="0.01" value="0">
-    <input id="rotateYAngle" type="range" min="-1" max="1" step="0.01" value="0">
-    <input id="rotateZAngle" type="range" min="-1" max="1" step="0.01" value="0">
-
-    <!-- позиция -->
-    <input id="posX" type="range" min="-200" max="200" step="1" value="0">
-    <input id="posY" type="range" min="-200" max="200" step="1" value="0">
-    <input id="posZ" type="range" min="-500" max="500" step="1" value="-500">
-
-    <!-- прочее -->
-    <input id="skewAngleX" type="range" min="-0.785" max="0.785" step="0.01" value="0">
-    <input id="skewAngleY" type="range" min="-0.785" max="0.785" step="0.01" value="0">
-    <input id="chaos" type="range" min="0" max="0.52" step="0.01" value="0">
-
-    <!-- палитры/цвета/hex (чтобы твой код спокойно их находил, если нужно) -->
-    <div id="bgPalette"></div>
-    <div id="ellipsePalette"></div>
-    <input id="bgColorInput" value="#000000">
-    <input id="ellipseColorInput" value="#FFFFFF">
-
-    <!-- кнопки цветов (не нужны, но твой setup() слушает их — пусть будут) -->
-    <button id="randomColorBothBtn"></button>
-    <button id="randomBgBtn"></button>
-    <button id="randomEllipseBtn"></button>
-
-    <!-- кнопки single-save (не нужны, но если где-то есть listeners — пусть будут) -->
-    <button id="save1000Btn"></button>
-    <button id="save534Btn"></button>
-    <button id="save640Btn"></button>
-
-    <!-- кнопки random/reset (в setup() есть listeners — пусть будут) -->
-    <button id="randomBtn"></button>
-    <button id="resetBtn"></button>
-
   </div>
 </body>
 </html>
